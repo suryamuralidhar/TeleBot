@@ -1,5 +1,6 @@
 from telethon import TelegramClient
-from config import API_ID, API_HASH
+from telethon.sessions import StringSession
+from config import API_ID, API_HASH, SESSION
 
-def get_client(session_name="mysession"):
-    return TelegramClient(session_name, API_ID, API_HASH)
+def get_client():
+    return TelegramClient(StringSession(SESSION), API_ID, API_HASH)
