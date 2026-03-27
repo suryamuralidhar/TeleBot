@@ -21,15 +21,20 @@ async def process_message(event, db):
     text = msg.text.strip()
     tags = extract_tags(text)
 
-    log(f"Tags found: {tags}")
+    log(f"📦 Message: {text}")
+    log(f"🏷 Tags: {tags}")
 
     destinations = get_destinations(tags)
+
+    if not destinations:
+        log("❌ No matching routes")
+        return
 
     for dest in destinations:
         key = f"{msg.id}|{dest}"
 
         if key in db:
-            log(f"Duplicate skipped → {dest}")
+            log(f"⚠️ Duplicate skipped → {dest}")
             continue
 
         try:
@@ -38,10 +43,10 @@ async def process_message(event, db):
             await save_db(client, key)
             db.add(key)
 
-            success(f"Forwarded → {dest}")
+            success(f"🚀 Forwarded → {dest}")
 
         except Exception as e:
-            error(f"Error → {dest} | {e}")
+            error(f"❌ Error → {dest} | {e}")
 
 
 async def main():
@@ -49,11 +54,27 @@ async def main():
 
     log("🚀 System started")
 
+    # 🔥 FORCE RESOLVE SOURCE CHANNEL
+    source_entity = await client.get_entity(SOURCE_CHANNEL)
+    log(f"🎯 Listening to: {source_entity.title} ({source_entity.id})")
+
     db = await load_db(client)
 
-    @client.on(events.NewMessage(chats=SOURCE_CHANNEL))
+    @client.on(events.NewMessage)
     async def handler(event):
-        await process_message(event, db)
+        try:
+            chat = await event.get_chat()
+
+            log(f"📩 Incoming from: {chat.id}")
+
+            # 🔥 STRICT MATCH
+            if int(chat.id) != int(SOURCE_CHANNEL):
+                return
+
+            await process_message(event, db)
+
+        except Exception as e:
+            error(f"Handler error: {e}")
 
     log("👀 Listening for messages...")
     await client.run_until_disconnected()
