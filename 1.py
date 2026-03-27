@@ -40,7 +40,7 @@ ROUTES = {
 -1003752015548: ["Vase","flower"],
 -1003754983761: ["Decor"],
 -1003809497514: ["Armchair" , "Chair"],
--1003858996511: ["Carpet"], 
+-1003862450569: ["Carpet"], 
 -1003835504670: ["Rug"], 
 -1003794820459: ["Bed","matress"],
 -1003815972764: ["Shrubs" , "Bush" , "Bushes","plants","plant"], 
@@ -49,7 +49,7 @@ ROUTES = {
 -1003718603443: ["Water", "Liquid"], 
 -1003757370342: ["Fabric"], 
 -1003319756110: ["Metal"], 
--1003751276058: ["Windows" , "Window","Frame"], 
+-1003751276058: ["Windows" , "Window","Frame"],  	
 -1003537174392: ["Doors" , "Door"],   
 -1003514048910: ["Curtains" , "Curtain"],
 -1003606126385: ["Car" ,["car","vintage"],"coupe","sedan","pickup","suv","Hatchback"], 
@@ -63,10 +63,6 @@ ROUTES = {
 -1003780728078: ["Toilet" , "WC"],
 -1003886868767: [["Track" , "Light"],["Track" , "Lighting"]],
 
-
-
-    
-   
 }
 
 # ================================
