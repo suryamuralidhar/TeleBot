@@ -1,12 +1,8 @@
-from fastapi import FastAPI
+def log(msg):
+    print(f"[LOG] {msg}")
 
-app = FastAPI()
+def success(msg):
+    print(f"[SUCCESS] {msg}")
 
-stats = {
-    "processed": 0,
-    "sent": 0
-}
-
-@app.get("/")
-def home():
-    return stats
+def error(msg):
+    print(f"[ERROR] {msg}")
