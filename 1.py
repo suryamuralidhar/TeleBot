@@ -22,13 +22,11 @@ SCAN_LIMIT = None
 TIME_WINDOW = 120
 SEARCH_RANGE = 15
 
-# 🔥 SAFE DELAY SETTINGS
-MIN_DELAY = 2.5
-MAX_DELAY = 4.5
+# 🔥 SPEED CONTROL (SAFE)
+MIN_DELAY = 3.5
+MAX_DELAY = 6.0
 
 IS_SCANNING = True
-
-# 🔥 GLOBAL RATE CONTROL
 LAST_ACTION_TIME = 0
 
 ROUTES = {
@@ -63,13 +61,30 @@ ROUTES = {
 -1003780728078: ["Toilet" , "WC"],
 -1003886868767: [["Track" , "Light"],["Track" , "Lighting"]],
 
-}
 
+
+    
+   
+}
 # ================================
 # 🔥 CLIENT
 # ================================
 
 client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
+
+# ================================
+# 🔌 CONNECTION GUARD
+# ================================
+
+async def ensure_connection():
+    while True:
+        if not client.is_connected():
+            print("🔌 Reconnecting...")
+            try:
+                await client.connect()
+            except Exception as e:
+                print("Reconnect failed:", e)
+        await asyncio.sleep(10)
 
 # ================================
 # 🔥 GLOBAL DELAY
@@ -80,13 +95,12 @@ async def global_delay():
 
     now = asyncio.get_event_loop().time()
     diff = now - LAST_ACTION_TIME
+    wait = random.uniform(MIN_DELAY, MAX_DELAY)
 
-    min_wait = random.uniform(MIN_DELAY, MAX_DELAY)
-
-    if diff < min_wait:
-        wait_time = min_wait - diff
-        print(f"😴 Delay: {wait_time:.2f}s")
-        await asyncio.sleep(wait_time)
+    if diff < wait:
+        sleep_time = wait - diff
+        print(f"😴 Delay: {sleep_time:.2f}s")
+        await asyncio.sleep(sleep_time)
 
     LAST_ACTION_TIME = asyncio.get_event_loop().time()
 
@@ -129,6 +143,21 @@ def extract_filename_hint(msg):
     return match.group(0) if match else None
 
 # ================================
+# 🔐 SAFE GET MESSAGES
+# ================================
+
+async def safe_get_messages(chat, ids):
+    while True:
+        try:
+            if not client.is_connected():
+                await client.connect()
+            return await client.get_messages(chat, ids=ids)
+
+        except Exception as e:
+            print(f"⚠️ get_messages retry: {e}")
+            await asyncio.sleep(5)
+
+# ================================
 # 🔥 SAFE FORWARD
 # ================================
 
@@ -140,7 +169,8 @@ async def safe_forward(dest, message):
             if not client.is_connected():
                 await client.connect()
 
-            await client.forward_messages(dest, message)
+            entity = await client.get_entity(dest)
+            await client.forward_messages(entity, message)
             return
 
         except FloodWaitError as e:
@@ -148,7 +178,7 @@ async def safe_forward(dest, message):
             await asyncio.sleep(e.seconds + 2)
 
         except Exception as e:
-            print(f"⚠️ Retry: {e}")
+            print(f"⚠️ Forward retry: {e}")
             await asyncio.sleep(5)
 
 # ================================
@@ -156,9 +186,9 @@ async def safe_forward(dest, message):
 # ================================
 
 async def find_related_file(msg):
-    nearby = await client.get_messages(
+    nearby = await safe_get_messages(
         SOURCE_GROUP_ID,
-        ids=range(msg.id - SEARCH_RANGE, msg.id + SEARCH_RANGE)
+        range(msg.id - SEARCH_RANGE, msg.id + SEARCH_RANGE)
     )
 
     hint = extract_filename_hint(msg)
@@ -191,6 +221,8 @@ async def find_related_file(msg):
 # ================================
 
 async def process_message(msg):
+    global IS_SCANNING
+
     if not msg or not msg.photo:
         return
 
@@ -235,9 +267,15 @@ async def process_message(msg):
             print("📦 File sent")
 
             await save_to_db(filename)
-
             print(f"✅ Saved → {len(saved_files)}")
+
             break
+
+    # 🔥 SCAN SPEED CONTROL (THIS FIXES YOUR ISSUE)
+    if IS_SCANNING:
+        delay = random.uniform(2.5, 4.0)
+        print(f"🐢 Scan delay: {delay:.2f}s")
+        await asyncio.sleep(delay)
 
 # ================================
 # 🔁 SCAN
@@ -268,8 +306,10 @@ async def handler(event):
 # ================================
 
 async def main():
-    await client.start()
+    await client.connect()
     print("🚀 Started")
+
+    asyncio.create_task(ensure_connection())
 
     await load_db()
     await process_old()
