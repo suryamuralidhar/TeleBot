@@ -4,12 +4,12 @@
 
 import asyncio
 import re
-# ================================import random
+import random
 
-# ================================from accounts import init_clients, get_client
-# ================================from config import *
-# ================================from db import is_duplicate, save
-# ================================from router import get_destinations
+from accounts import init_clients, get_client
+from config import *
+from db import is_duplicate, save
+from router import get_destinations
 
 # ================================
 # 🔌 CONNECTION GUARD
