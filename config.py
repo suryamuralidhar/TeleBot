@@ -1,6 +1,6 @@
 import os
 
-API_ACCOUNTS = [
+#API_ACCOUNTS = [
     {
         "api_id": int(os.getenv("API_ID_1")),
         "api_hash": os.getenv("API_HASH_1"),
