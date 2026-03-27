@@ -3,7 +3,9 @@ from config import DB_CHANNEL
 async def load_db(client):
     db = set()
 
-    messages = await client.get_messages(DB_CHANNEL, limit=5000)
+    entity = await client.get_entity(DB_CHANNEL)
+
+    messages = await client.get_messages(entity, limit=None)
 
     for msg in messages:
         if msg.text:
@@ -14,4 +16,5 @@ async def load_db(client):
 
 
 async def save_db(client, key):
-    await client.send_message(DB_CHANNEL, key)
+    entity = await client.get_entity(DB_CHANNEL)
+    await client.send_message(entity, key)
