@@ -1,17 +1,20 @@
 # ================================
-# 🔧 CONFIG
+# 🔧 CONFIG (FROM ENV)
 # ================================
 
-API_ID = 33086126
-API_HASH = "6d39b528f805d5e7409a484d146d64d2"
+import os
+
+API_ID = int(os.getenv("API_ID"))
+API_HASH = os.getenv("API_HASH")
+SESSION = os.getenv("SESSION_STRING")
 
 SOURCE_GROUP_ID = -1001811887579 
 
 ROUTES = {
 -1003827068085: ["Sofa"],
--1003753218709: ["Pouf","poof"],
--1003772273357: ["Lamp","Light","lighting","lights"],
--1003691605172: ["Chandelier" , "Pendent" ,["Pendent","light"]],
+-1003753218709: ["Pouf"],
+-1003869331564: ["Lamp","Light","lighting","lights"],
+-1003691605172: ["Chandelier" , "Pendant_light","Pendant_lighting"],
 -1003557082671: ["Table"],
 -1003752015548: ["Vase","flower"],
 -1003754983761: ["Decor"],
@@ -28,7 +31,7 @@ ROUTES = {
 -1003751276058: ["Windows" , "Window","Frame"], 
 -1003537174392: ["Doors" , "Door"],   
 -1003514048910: ["Curtains" , "Curtain"],
--1003606126385: ["Car" ,["car","vintage"],"coupe","sedan","pickup","suv","Hatchback"], 
+-1003606126385: ["Car","coupe","sedan","pickup","suv","Hatchback"], 
 -1003779084703: ["Marble"], 
 -1003750864556: ["Kitchen"], 
 -1003727774043: ["Bathroom","Restroom","Toilet"],
@@ -37,38 +40,37 @@ ROUTES = {
 -1003566977180: ["Shower"],
 -1003707812721: ["Faucet","tap","mixer","bidet","bidette"],
 -1003780728078: ["Toilet" , "WC"],
--1003886868767: [["Track" , "Light"],["Track" , "Lighting"]],
-
-
-
-    
-   
+-1003886868767: [["Track" , "Light"], ["Track", "Lighting"]],
 }
 
 TIME_WINDOW = 120
 SEARCH_RANGE = 15
 SCAN_LIMIT = None
 
-DELAY_MIN = 1.4
-DELAY_MAX = 1.9
+DELAY_MIN = 1.5
+DELAY_MAX = 2.5
 
 DB_FILE = "files_db.json"
 
 
-
 # ================================
-# 🚀 CODE
+# 🚀 IMPORTS
 # ================================
 
 from telethon import TelegramClient, events
+from telethon.sessions import StringSession
 from telethon.errors import FloodWaitError
 import asyncio
 import re
 import json
-import os
 import random
 
-client = TelegramClient('session_master', API_ID, API_HASH)
+
+# ================================
+# 🔥 CLIENT (RAILWAY SAFE)
+# ================================
+
+client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
 
 
 # ================================
@@ -85,7 +87,6 @@ if os.path.exists(DB_FILE):
 else:
     saved_files = set()
 
-# ✅ AUTO COUNT FROM DB
 total_sent = len(saved_files)
 print(f"📊 Already Sent: {total_sent}")
 
@@ -105,7 +106,6 @@ def extract_hashtags(msg):
 
     clean = [t.replace("#", "") for t in tags]
 
-    # 🔥 expand underscore tags
     expanded = set(clean)
     for tag in clean:
         if "_" in tag:
@@ -123,7 +123,7 @@ def extract_filename_hint(msg):
 async def safe_forward(dest, message):
     while True:
         try:
-            await client.get_entity(dest)  # 🔥 fix entity error
+            await client.get_entity(dest)
             await client.forward_messages(dest, message)
             return
         except FloodWaitError as e:
@@ -209,13 +209,11 @@ async def process_message(msg):
 
                 print(f"📤 Sending → {filename}")
 
-                # 🖼️ IMAGE
                 await safe_forward(dest, msg)
                 print("   🖼️ Image sent")
 
                 await asyncio.sleep(random.uniform(DELAY_MIN, DELAY_MAX))
 
-                # 📦 FILE
                 await safe_forward(dest, related_file)
                 print("   📦 File sent")
 
@@ -224,9 +222,7 @@ async def process_message(msg):
                 saved_files.add(filename)
                 save_db()
 
-                # ✅ AUTO UPDATE COUNT
                 total_sent = len(saved_files)
-
                 print(f"✅ DONE → Total Sent: {total_sent}")
 
                 break
@@ -236,28 +232,17 @@ async def process_message(msg):
 
 
 # ================================
-# 🔁 OLD MESSAGES
+# 🔁 OLD + LIVE
 # ================================
 
 async def process_old():
     print("⏳ Scanning...\n")
 
-    count = 0
-
     async for msg in client.iter_messages(SOURCE_GROUP_ID, limit=SCAN_LIMIT):
-        count += 1
-
-        if count % 100 == 0:
-            print(f"📊 Checked: {count}")
-
         await process_message(msg)
 
     print("✅ Done old")
 
-
-# ================================
-# 🔴 LIVE MODE
-# ================================
 
 @client.on(events.NewMessage(chats=SOURCE_GROUP_ID))
 async def handler(event):
