@@ -1,9 +1,17 @@
-saved_files = {}
+from config import DB_CHANNEL
 
-def is_duplicate(dest, filename):
-    return dest in saved_files and filename in saved_files[dest]
+async def load_db(client):
+    db = set()
 
-def save(dest, filename):
-    if dest not in saved_files:
-        saved_files[dest] = set()
-    saved_files[dest].add(filename)
+    messages = await client.get_messages(DB_CHANNEL, limit=5000)
+
+    for msg in messages:
+        if msg.text:
+            db.add(msg.text.strip())
+
+    print(f"📂 DB Loaded: {len(db)} entries")
+    return db
+
+
+async def save_db(client, key):
+    await client.send_message(DB_CHANNEL, key)
