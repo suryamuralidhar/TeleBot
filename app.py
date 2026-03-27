@@ -1,4 +1,3 @@
-
 import asyncio
 from telethon import events
 
@@ -7,7 +6,7 @@ from config import SOURCE_CHANNEL
 from db import load_db, save_db
 from router import get_destinations
 from ai import extract_tags
-from dashboard import log, error, success
+from dashboard import log, success, error
 
 
 client = get_client()
@@ -20,9 +19,9 @@ async def process_message(event, db):
         return
 
     text = msg.text.strip()
-
     tags = extract_tags(text)
-    log(f"Tags: {tags}")
+
+    log(f"Tags found: {tags}")
 
     destinations = get_destinations(tags)
 
@@ -42,7 +41,7 @@ async def process_message(event, db):
             success(f"Forwarded → {dest}")
 
         except Exception as e:
-            error(f"Failed → {dest} | {e}")
+            error(f"Error → {dest} | {e}")
 
 
 async def main():
@@ -56,7 +55,7 @@ async def main():
     async def handler(event):
         await process_message(event, db)
 
-    log("👀 Listening...")
+    log("👀 Listening for messages...")
     await client.run_until_disconnected()
 
 
