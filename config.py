@@ -1,16 +1,14 @@
 import os
 
-API_ACCOUNTS = [
-    {
-        "api_id": int(os.getenv("API_ID_1")),
-        "api_hash": os.getenv("API_HASH_1"),
-        "session": os.getenv("SESSION_1")
-    },
-    # add more accounts here
-]
+API_ID = int(os.getenv("API_ID"))
+API_HASH = os.getenv("API_HASH")
+SESSION = os.getenv("SESSION")
 
-SOURCE_GROUP_ID = -1001811887579
-DB_CHANNEL_ID = -1003591739715
+SOURCE_CHANNEL = int(os.getenv("SOURCE_CHANNEL"))
+DB_CHANNEL = int(os.getenv("DB_CHANNEL"))
 
-MIN_DELAY = 3
-MAX_DELAY = 6
+# 🔁 Routing rules (can also move to ENV later if needed)
+ROUTES = {
+    -1003728548283: ["sofa"],
+    
+}
